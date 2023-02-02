@@ -77,10 +77,30 @@ class Projectile {
         this.position.y += this.velocity.y
     }
 }
+class InvaderProjectile {
+    constructor({ position, velocity }) {
+        this.position = position
+        this.velocity = velocity
+
+        this.width = 3
+        this.height = 10
+    }
+
+    draw() {
+        c.fillStyle = 'white'
+        c.fillRect(this.position.x, this.position.y, this.width, this.height)
+    }
+
+    update() {
+        this.draw()
+        this.position.x += this.velocity.x
+        this.position.y += this.velocity.y
+    }
+}
 
 
 class Invader {
-    constructor({position}) {
+    constructor({ position }) {
         this.velocity = {
             x: 0,
             y: 0
@@ -104,17 +124,30 @@ class Invader {
         c.drawImage(this.image, this.position.x, this.position.y, this.width, this.height)
     }
 
-    update({velocity}) {
+    update({ velocity }) {
         if (this.image) {
             this.draw()
             this.position.x += velocity.x
             this.position.y += velocity.y
         }
     }
+
+    shoot(invaderProjectiles) {
+        invaderProjectiles.push(new InvaderProjectile({
+            position: {
+                x: this.position.x + this.width / 2,
+                y: this.position.y + this.height
+            },
+            velocity: {
+                x: 0,
+                y: 5
+            }
+        }))
+    }
 }
 
 class Grid {
-    constructor(){
+    constructor() {
         this.position = {
             x: 0,
             y: 0
@@ -129,24 +162,26 @@ class Grid {
 
         const columns = Math.floor(Math.random() * 10 + 5)
         const rows = Math.floor(Math.random() * 5 + 2)
-        for(let x=0;x<columns;x++){
-            for(let y=0;y<rows;y++){
+        for (let x = 0; x < columns; x++) {
+            for (let y = 0; y < rows; y++) {
 
-                this.invaders.push(new Invader({position:{
-                    x: x * 30,
-                    y: y * 30
-                }}))
+                this.invaders.push(new Invader({
+                    position: {
+                        x: x * 30,
+                        y: y * 30
+                    }
+                }))
             }
         }
 
         this.width = columns * 30
     }
 
-    update(){
+    update() {
         this.position.x += this.velocity.x
         this.position.y += this.velocity.y
         this.velocity.y = 0
-        if(this.position.x + this.width >= canvas.width || this.position.x <=0){
+        if (this.position.x + this.width >= canvas.width || this.position.x <= 0) {
             this.velocity.x = -this.velocity.x
             this.velocity.y = 30
         }
@@ -156,6 +191,7 @@ class Grid {
 const player = new Player()
 const projectiles = []
 const grids = []
+const invaderProjectiles = []
 
 const keys = {
     a: {
@@ -177,6 +213,20 @@ function animate() {
     c.fillStyle = 'black'
     c.fillRect(0, 0, canvas.width, canvas.height)
     player.update()
+    invaderProjectiles.forEach((invaderProjectile,index) => {
+        if(invaderProjectile.position.y + invaderProjectile.height >= canvas.height){
+            setTimeout(()=>{
+                invaderProjectiles.splice(index,1)
+            },0)
+        }else{
+            invaderProjectile.update()
+        }
+
+        if(invaderProjectile.position.y + invaderProjectile.height >= player.position.y && invaderProjectile.position.x + invaderProjectile.width>= player.position.x && invaderProjectile.position.x <= player.position.x + player.width){
+            console.log('you lose')
+        }
+
+    })
     projectiles.forEach((projectile, index) => {
         if (projectile.position.y + projectile.radius <= 0) {
             setTimeout(() => {
@@ -187,31 +237,36 @@ function animate() {
         }
     })
 
-    grids.forEach((grid,gridIndex)=>{
+    grids.forEach((grid, gridIndex) => {
         grid.update()
-        grid.invaders.forEach((invader,i) =>{
-            invader.update({velocity: grid.velocity})
 
-            projectiles.forEach((projectile,j)=>{
-                if(projectile.position.y - projectile.radius <= invader.position.y + invader.height && projectile.position.x + projectile.radius >= invader.position.x && projectile.position.x - projectile.radius <= invader.position.x + invader.width && projectile.position.y + projectile.radius>= invader.position.y){
-                    setTimeout(()=>{
+        // spawn projectiles 
+        if(frames % 100 === 0 && grid.invaders.length> 0){
+            grid.invaders[Math.floor(Math.random() * grid.invaders.length)].shoot(invaderProjectiles)
+        }
+        grid.invaders.forEach((invader, i) => {
+            invader.update({ velocity: grid.velocity })
 
-                        const invaderFound = grid.invaders.find((invader2)=> invader2 === invader)
-                        const projectileFound = projectiles.find((projectile2)=> projectile2 === projectile)
+            projectiles.forEach((projectile, j) => {
+                if (projectile.position.y - projectile.radius <= invader.position.y + invader.height && projectile.position.x + projectile.radius >= invader.position.x && projectile.position.x - projectile.radius <= invader.position.x + invader.width && projectile.position.y + projectile.radius >= invader.position.y) {
+                    setTimeout(() => {
+
+                        const invaderFound = grid.invaders.find((invader2) => invader2 === invader)
+                        const projectileFound = projectiles.find((projectile2) => projectile2 === projectile)
                         // remove invader and projectile
-                        if(projectileFound && invaderFound){
-                            grid.invaders.splice(i,1)
-                            projectiles.splice(j,1)
+                        if (projectileFound && invaderFound) {
+                            grid.invaders.splice(i, 1)
+                            projectiles.splice(j, 1)
 
-                            if(grid.invaders.length > 0){
+                            if (grid.invaders.length > 0) {
                                 const firstInvader = grid.invaders[0]
-                                const lastInvader = grid.invaders[grid.invaders.length-1]
+                                const lastInvader = grid.invaders[grid.invaders.length - 1]
 
                                 grid.width = lastInvader.position.x - firstInvader.position.x + lastInvader.width
 
                                 grid.position.x = firstInvader.position.x
-                            }else{
-                                grid.splice(gridIndex,1)
+                            } else {
+                                grid.splice(gridIndex, 1)
                             }
                         }
                     })
@@ -230,11 +285,14 @@ function animate() {
         player.velocity.x = 0
         player.rotation = 0
     }
-    if(frames % randomInterval === 0){
+
+    //spawn enemies
+    if (frames % randomInterval === 0) {
         grids.push(new Grid())
         randomInterval = Math.floor(Math.random() * 500 + 1000)
         frames = 0
     }
+
     frames++
 }
 
