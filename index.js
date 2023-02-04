@@ -1,4 +1,5 @@
 const canvas = document.querySelector('canvas')
+const scoreEl = document.querySelector('#scoreEl')
 const c = canvas.getContext('2d');
 canvas.height = innerHeight
 canvas.width = innerWidth
@@ -255,6 +256,7 @@ for (let a = 0; a < 100; a++) {
 }
 
 let frames = 0
+let score = 0
 randomInterval = Math.floor(Math.random() * 500 + 1000)
 let game = {
     over:false,
@@ -356,6 +358,8 @@ function animate() {
 
                             grid.invaders.splice(i, 1)
                             projectiles.splice(j, 1)
+                            score++
+                            scoreEl.innerText = score
 
                             if (grid.invaders.length > 0) {
                                 const firstInvader = grid.invaders[0]
