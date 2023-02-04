@@ -1,8 +1,11 @@
 const canvas = document.querySelector('canvas')
+const screen = document.querySelector('.screen')
 const scoreEl = document.querySelector('#scoreEl')
 const c = canvas.getContext('2d');
-canvas.height = innerHeight
-canvas.width = innerWidth
+
+
+canvas.width = 1024
+canvas.height = 576
 
 class Player {
     constructor() {
@@ -312,11 +315,13 @@ function animate() {
         //projectile hits player
         if (invaderProjectile.position.y + invaderProjectile.height >= player.position.y && invaderProjectile.position.x + invaderProjectile.width >= player.position.x && invaderProjectile.position.x <= player.position.x + player.width) {
             // console.log('you lose')
+            document.getElementById('lose').play();
             setTimeout(() => {
                 invaderProjectiles.splice(index, 1)
                 player.opacity = 0
                 game.over = true
             }, 0)
+            screen.classList.add('down')
             setTimeout(() => {
                 game.active = false
             }, 2000)
@@ -347,7 +352,7 @@ function animate() {
             //projectiles hit enemies
             projectiles.forEach((projectile, j) => {
                 if (projectile.position.y - projectile.radius <= invader.position.y + invader.height && projectile.position.x + projectile.radius >= invader.position.x && projectile.position.x - projectile.radius <= invader.position.x + invader.width && projectile.position.y + projectile.radius >= invader.position.y) {
-
+                    document.getElementById('point').play()
                     setTimeout(() => {
 
                         const invaderFound = grid.invaders.find((invader2) => invader2 === invader)
@@ -369,7 +374,7 @@ function animate() {
 
                                 grid.position.x = firstInvader.position.x
                             } else {
-                                grid.splice(gridIndex, 1)
+                                grids.splice(gridIndex, 1)
                             }
                         }
                     })
@@ -400,7 +405,9 @@ function animate() {
 }
 
 animate()
-
+function restart(){
+    window.location.reload()
+}
 addEventListener('keydown', ({ key }) => {
     if(game.over) return
     switch (key) {
@@ -414,6 +421,7 @@ addEventListener('keydown', ({ key }) => {
             break
         case ' ':
             // console.log('space')
+            document.getElementById('shoot').play();
             projectiles.push(
                 new Projectile({
                     position: {
@@ -441,7 +449,6 @@ addEventListener('keyup', ({ key }) => {
             keys.d.pressed = false
             break
         case ' ':
-            // console.log('space')
             break
     }
 })
